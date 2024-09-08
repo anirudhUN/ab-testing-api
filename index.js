@@ -64,7 +64,16 @@ app.use(async (req, res, next) => {
 
 // Function to create a Mongoose model dynamically based on collection name
 const getDynamicModel = (collectionName) => {
-  return mongoose.model(collectionName, new mongoose.Schema({}, { strict: false }), collectionName);
+  if (mongoose.models[collectionName]) {
+    return mongoose.model(collectionName);
+  }
+  
+  const schema = new mongoose.Schema({}, { 
+    strict: false,
+    collection: collectionName  // Explicitly set the collection name
+  });
+
+  return mongoose.model(collectionName, schema);
 };
 
 // API endpoint to receive metrics and dynamically select a collection
