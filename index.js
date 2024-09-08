@@ -11,16 +11,19 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app = express();
 
-
 const corsOptions = {
-    origin: ['http://localhost:3001/','https://fragment2.vercel.app/', 'https://ab-test-inky.vercel.app/'],
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    optionsSuccessStatus: 204
-  };
-  
-  app.use(cors(corsOptions));
+  origin: ['http://localhost:3001', 'https://fragment2.vercel.app', 'https://ab-test-inky.vercel.app'],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+
+// Add body parsing middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Basic authentication middleware
 app.use(basicAuth({
@@ -48,7 +51,13 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
 
 app.use(async (req, res, next) => {
   if (!isConnected) {
-    await mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    try {
+      await mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+      isConnected = true;
+    } catch (err) {
+      console.error('Error connecting to MongoDB:', err);
+      return res.status(500).json({ error: 'Database connection error' });
+    }
   }
   next();
 });
@@ -72,7 +81,7 @@ app.post('/api/:collectionName/metrics', async (req, res) => {
     res.status(201).json({ message: 'Metric saved successfully', id: newMetric._id });
   } catch (error) {
     console.error('Error saving metric:', error);
-    res.status(500).json({ error: 'Error saving metric' });
+    res.status(500).json({ error: 'Error saving metric', details: error.message });
   }
 });
 
