@@ -37,12 +37,21 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
-// Connect to MongoDB
+let isConnected = false;  // To track MongoDB connection status
+
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
+  .then(() => {
+    isConnected = true;
+    console.log('Connected to MongoDB');
+  })
   .catch(err => console.error('MongoDB connection error:', err));
 
-app.use(bodyParser.json());
+app.use(async (req, res, next) => {
+  if (!isConnected) {
+    await mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  }
+  next();
+});
 
 // Function to create a Mongoose model dynamically based on collection name
 const getDynamicModel = (collectionName) => {
