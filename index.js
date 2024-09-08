@@ -42,31 +42,27 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-// Create a dynamic schema
-const MetricSchema = new mongoose.Schema({}, { strict: false });
-// const Metric = mongoose.model('Metric', MetricSchema);
-
-// Function to dynamically get or create a model for a given collection
-const getModelForCollection = (collectionName) => {
-  return mongoose.models[collectionName] || mongoose.model(collectionName, MetricSchema, collectionName);
-};
-
 app.use(bodyParser.json());
 
-// API endpoint to receive metrics in a specific collection
-app.post('/api/metrics/:collection', async (req, res) => {
-  const collectionName = req.params.collection; // Get collection name from the URL param
+// Function to create a Mongoose model dynamically based on collection name
+const getDynamicModel = (collectionName) => {
+  return mongoose.model(collectionName, new mongoose.Schema({}, { strict: false }), collectionName);
+};
+
+// API endpoint to receive metrics and dynamically select a collection
+app.post('/api/:collectionName/metrics', async (req, res) => {
+  const { collectionName } = req.params;  // Get collection name from URL
+  const metricData = req.body;
+
   try {
-    const metricData = req.body;
+    // Get dynamic model for the collection
+    const Metric = getDynamicModel(collectionName);
 
-    // Get or create a Mongoose model for the requested collection
-    const DynamicModel = getModelForCollection(collectionName);
-
-    // Save the metric data to the selected collection
-    const newMetric = new DynamicModel(metricData);
+    const newMetric = new Metric(metricData);
     await newMetric.save();
-    res.status(201).json({ message: `Metric saved successfully in ${collectionName} collection`, id: newMetric._id });
+    res.status(201).json({ message: 'Metric saved successfully', id: newMetric._id });
   } catch (error) {
+    console.error('Error saving metric:', error);
     res.status(500).json({ error: 'Error saving metric' });
   }
 });
