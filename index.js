@@ -44,17 +44,28 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
 
 // Create a dynamic schema
 const MetricSchema = new mongoose.Schema({}, { strict: false });
-const Metric = mongoose.model('Metric', MetricSchema);
+// const Metric = mongoose.model('Metric', MetricSchema);
+
+// Function to dynamically get or create a model for a given collection
+const getModelForCollection = (collectionName) => {
+  return mongoose.models[collectionName] || mongoose.model(collectionName, MetricSchema, collectionName);
+};
 
 app.use(bodyParser.json());
 
-// API endpoint to receive metrics
-app.post('/api/metrics', async (req, res) => {
+// API endpoint to receive metrics in a specific collection
+app.post('/api/metrics/:collection', async (req, res) => {
+  const collectionName = req.params.collection; // Get collection name from the URL param
   try {
     const metricData = req.body;
-    const newMetric = new Metric(metricData);
+
+    // Get or create a Mongoose model for the requested collection
+    const DynamicModel = getModelForCollection(collectionName);
+
+    // Save the metric data to the selected collection
+    const newMetric = new DynamicModel(metricData);
     await newMetric.save();
-    res.status(201).json({ message: 'Metric saved successfully', id: newMetric._id });
+    res.status(201).json({ message: `Metric saved successfully in ${collectionName} collection`, id: newMetric._id });
   } catch (error) {
     res.status(500).json({ error: 'Error saving metric' });
   }
