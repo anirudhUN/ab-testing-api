@@ -12,7 +12,7 @@ if (process.env.NODE_ENV !== 'production') {
 const app = express();
 
 const corsOptions = {
-  origin: ['http://localhost:3001', 'https://fragment2.vercel.app', 'https://ab-test-inky.vercel.app'],
+  origin: ['http://localhost:3001', 'https://fragment2.vercel.app', 'https://ab-test-inky.vercel.app',`https://d3uaqhvuvl9zd8.cloudfront.net/*`],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
