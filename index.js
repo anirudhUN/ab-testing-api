@@ -19,7 +19,7 @@ const corsOptions = {
   optionsSuccessStatus: 204
 };
 
-app.use(cors(corsOptions));
+app.use(cors());
 
 // Add body parsing middleware
 app.use(bodyParser.json());
